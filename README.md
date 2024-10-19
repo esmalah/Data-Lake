@@ -29,7 +29,7 @@ Ce projet met en place une plateforme Data Lake House pour l'analyse des ventes 
 
 ## Clonez le projet :
    ```bash
-   git clone https://github.com/your-repository/data-lake-house
+   git clone https://github.com/your-repository/Data-Lake
    ```
 
 
