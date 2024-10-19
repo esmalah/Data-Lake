@@ -25,7 +25,7 @@ Ce projet met en place une plateforme Data Lake House pour l'analyse des ventes 
 - Apache Spark
 - Hive
 - MLlib
-- Power BI / Apache Superset
+- Power BI
 
 ## Clonez le projet :
    ```bash
