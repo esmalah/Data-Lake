@@ -12,9 +12,23 @@ SELECT b.model, SUM(f.quantity) as total_ventes
 FROM fait_orders f
 JOIN dim_bikes b ON f.product_id = b.bikeid
 GROUP BY b.model;
-//ventes total_ventes
+
+//CA Total
 SELECT SUM(o.quantity) as total_ventes
 FROM orders o;
+
+//CA par year
+SELECT  
+YEAR(TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(f.order_date, 'M/d/yyyy')))) as year,  
+SUM(f.quantity * b.price) as total_CA 
+FROM  
+fait_orders f 
+JOIN  
+dim_bikes b ON f.product_id = b.bikeid 
+GROUP BY  
+YEAR(TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(f.order_date, 'M/d/yyyy')))) 
+ORDER BY  
+year 
 
 //ventes par date 
 SELECT 
@@ -37,33 +51,34 @@ JOIN
 GROUP BY 
     c.FirstName, c.LastName;
 
+
 //taux_retention clients actifs et client perdus
-WITH orders_before_2013 AS (
-    SELECT customer_id
-    FROM fait_orders
-    WHERE TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(order_date, 'd/M/yyyy'))) < '2013-01-01'
-),
-orders_after_2013 AS (
-    SELECT customer_id
-    FROM fait_orders
-    WHERE TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(order_date, 'd/M/yyyy'))) >= '2013-01-01'
-)
+//New Clients
+SELECT  
+c.customerkey,  
+c.firstname,  
+c.lastname,  
+MAX(f.order_date) as last_order_date 
+FROM  
+fait_orders f 
+JOIN  
+dim_customers c ON f.customer_id = c.customerkey 
+GROUP BY  
+c.customerkey, c.firstname, c.lastname 
+HAVING  
+TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(MAX(f.order_date), 'M/d/yyyy'))) > '2015-01-01'
 
-INSERT OVERWRITE DIRECTORY '/user/cloudera/data/taux_retention'
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY ';'
-SELECT 
-    COUNT(DISTINCT c.CustomerKey) as total_clients,
-    COUNT(DISTINCT CASE 
-        WHEN TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(f.order_date, 'd/M/yyyy'))) >= '2015-01-01' 
-        THEN c.CustomerKey END) as clients_actifs,
-    COUNT(DISTINCT CASE 
-        WHEN o.customer_id IS NOT NULL AND oa.customer_id IS NULL 
-        THEN o.customer_id END) as clients_perdus
-FROM 
-    orders_before_2013 o
-LEFT JOIN orders_after_2013 oa ON o.customer_id = oa.customer_id
-JOIN dim_customers c ON o.customer_id = c.CustomerKey
-LEFT JOIN fait_orders f ON f.customer_id = o.customer_id;
-
-
+//Lost Clients
+SELECT  
+c.customerkey,  
+c.firstname,  
+c.lastname,  
+MAX(f.order_date) as last_order_date 
+FROM  
+fait_orders f 
+JOIN  
+dim_customers c ON f.customer_id = c.customerkey 
+GROUP BY  
+c.customerkey, c.firstname, c.lastname 
+HAVING  
+TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(MAX(f.order_date), 'M/d/yyyy'))) > '2015-01-01'
